@@ -13,28 +13,36 @@ if ! command -v zip &> /dev/null; then
     exit 1
 fi
 
-echo -e "\033[30m\033[103mДиректория BACKUPS с резервными копиями будет создана в корне системы \n\033[0m"
+read -p "Желаете создать резервные копии директорий (yes/no)? " backup_dirs
 
-read -p "Введите абсолютные пути к директориям для резервного копирования (разделите их пробелом): " -a directories
+backdirs=false
 
-# Создаем директорию для резервных копий
-backup_dir="/BACKUPS/backup_$(date +'%Y%m%d%H%M%S')"
-mkdir -p "$backup_dir"
+if [ "$backup_dirs" = "yes" ]; then
+    backdirs=true
+    echo -e "\033[30m\033[103mДиректория BACKUPS с резервными копиями будет создана в корне системы \n\033[0m"
 
-# Создаем резервные копии директорий с использованием rsync
-directories_exist=false
-for directory in "${directories[@]}"; do
-    if [ -d "$directory" ]; then
-        echo -e "\e[92mСоздание резервной копии директории $directory...\e[0m"
-        rsync -av --relative "$directory" "$backup_dir/"
-        echo -e "\e[93mРезервная копия директории $directory создана.\e[0m"
-        directories_exist=true
-    else
-        echo -e "\e[91mПредупреждение: Директория '$directory' не существует\e[0m"
-    fi
-done
+    read -p "Введите абсолютные пути к директориям для резервного копирования (разделите их пробелом): " -a directories
 
-# Проверка наличия активных Docker контейнеров
+    # Создаем директорию для резервных копий
+    backup_dir="/BACKUPS/backup_$(date +'%Y%m%d%H%M%S')"
+    mkdir -p "$backup_dir"
+
+    # Создаем резервные копии директорий с использованием rsync
+    directories_exist=false
+    for directory in "${directories[@]}"; do
+        if [ -d "$directory" ]; then
+            echo -e "\e[92mСоздание резервной копии директории $directory...\e[0m"
+            rsync -av --relative "$directory" "$backup_dir/"
+            echo -e "\e[93mРезервная копия директории $directory создана.\e[0m"
+            directories_exist=true
+        else
+            echo -e "\e[91mПредупреждение: Директория '$directory' не существует\e[0m"
+        fi
+    done
+else
+    echo -e "\e[91Резервные копии диекторий не созданы.\e[0m"
+fi
+
 read -p "Желаете создать резервные копии Docker контейнеров (yes/no)? " backup_containers
 
 # Если есть активные Docker контейнеры и пользователь согласен, создаем резервные копии каждого контейнера
@@ -65,6 +73,10 @@ if [ "$backup_containers" = "yes" ]; then
     else
         echo -e "\e[91mНет активных Docker контейнеров для резервирования.\e[0m"
     fi
+else
+
+echo -e "\e[91Резервные копии контейнеров не созданы.\e[0m"
+
 fi
 
 # Проверка на отсутствие каких-либо резервных копий
@@ -74,7 +86,9 @@ if [ "$directories_exist" = false ] && [ -z "$docker_containers" ]; then
 fi
 
 # Выводим сообщение о успешном завершении скрипта
-echo -e "\e[92mРезервные копии успешно созданы\e[0m"
+if [ "$backdirs" = true ] && [ "$backup_dirs" = "yes" ]; then
+    echo -e "\e[92mРезервные копии директорий успешно созданы\e[0m"
+fi
 
 # Если Docker контейнеры были упакованы, выводим сообщение об этом
 if [ -n "$docker_containers" ] && [ "$backup_containers" = "yes" ]; then

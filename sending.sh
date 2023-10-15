@@ -18,7 +18,7 @@ echo -e "\e[92mПодготовка к отправке на удаленный 
 REMOTE_USER="adminserver"
 REMOTE_HOST="192.168.1.1"
 REMOTE_DIR="/home/admin"
-
+REMOTE_PASS="00000"
 # Локальная директория для упаковки
 LOCAL_DIR="/BACKUPS"
 
@@ -35,7 +35,7 @@ zip -r "$LOCAL_DIR/$ARCHIVE_NAME" "$LOCAL_DIR"
 echo -e "\e[93mУпаковка директории в архив завершена.\e[0m"
 
 # Передача архива на удаленный сервер с авторизацией по паролю
-sshpass -p "000000" scp "$LOCAL_DIR/$ARCHIVE_NAME" "$REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR"
+sshpass -p "$REMOTE_PASS" scp "$LOCAL_DIR/$ARCHIVE_NAME" "$REMOTE_USER@$REMOTE_HOST:$REMOTE_DIR"
 
 # Проверка успешности передачи архива
 if [ $? -eq 0 ]; then
