@@ -1,7 +1,7 @@
 #!/bin/bash
 
 log_dir="/BACKUPS/logs"
-log_file="$log_dir/logs_$(date +'%Y%m%d_%H%M%S').log"
+log_file="$log_dir/logs_backups_$(date +'%Y%m%d_%H%M%S').log"
 
 log_message() {
     mkdir -p "$log_dir"
@@ -9,7 +9,7 @@ log_message() {
     echo "$(date +'%Y-%m-%d %H:%M:%S') - $1" >> "$log_file"
 }
 
-log_message "********* START *********"  
+log_message "********* START BACKUPS *********"  
 
 # Проверка наличия установленных пакетов rsync и zip
 check_packages() {
@@ -26,8 +26,9 @@ check_packages() {
             if [ "$install_app" = "yes" ]; then
                 log_message "Установка пакета $package..."
                 echo -e "\e[92mУстановка пакета $package...\e[0m"
-                apt update
-                apt install $package -y
+                
+                sudo apt update
+                sudo apt install $package -y
             
             else
                 log_message "РАБОТА СКРИПТА ОСТАНОВЛЕНА!!!"

@@ -1,11 +1,23 @@
 #!/bin/bash
 
+log_dir="/BACKUPS/logs"
+log_file="$log_dir/logs_recovery_$(date +'%Y%m%d_%H%M%S').log"
+
+log_message() {
+    mkdir -p "$log_dir"
+
+    echo "$(date +'%Y-%m-%d %H:%M:%S') - $1" >> "$log_file"
+}
+
+log_message "********* START RECOVERY *********"  
+
 # Находим крайнюю созданную директорию с резервными копиями
 backup_dir=$(find /BACKUPS -type d -name "backup_*" | sort -r | head -n 1)
 
 # Проверка наличия директории с резервными копиями
 if [ -z "$backup_dir" ]; then
-    echo -e "\e[91mПредупреждение: Директория с резервными копиями не найдена\e[0m"
+    log_message "Предупреждение: Директория с резервными копиями не найдена."
+    echo -e "\e[91mПредупреждение: Директория с резервными копиями не найдена.\e[0m"
     exit 1
 fi
 
@@ -19,7 +31,11 @@ restore_directories() {
             echo -e "\e[92mВосстановление директории из $backup в $restore_destination...\e[0m"
             mkdir -p "$restore_destination"
             rsync -av "$backup/" "$restore_destination/"
+            log_message "Директория $backup восстановлена в $restore_destination успешно"
             echo -e "\e[93mДиректория восстановлена успешно\e[0m"
+        else
+            log_message "Ошибка восстановления директории $backup в $restore_destination"
+            echo -e "\e[91mОшибка восстановления директории $backup в $restore_destination\e[0m"
         fi
     done
 }
@@ -37,10 +53,12 @@ restore_containers() {
                 container_name=$(basename "$tar_file" .tar)
                 echo -e "\e[92mВосстановление Docker контейнера $container_name...\e[0m"
                 sudo docker import "$tar_file" "$container_name"
+                log_message "Docker контейнер $container_name восстановлен успешно"
                 echo -e "\e[93mDocker контейнер $container_name восстановлен успешно\e[0m"
             fi
         done
     else
+        log_message "Предупреждение: Zip-архив с резервными копиями Docker контейнеров не найден"
         echo -e "\e[91mПредупреждение: Zip-архив с резервными копиями Docker контейнеров не найден\e[0m"
     fi
 }
@@ -60,5 +78,6 @@ case "$choice" in
     *) echo -e "\e[91mНеверный выбор\e[0m" ;;
 esac
 
-# Вывод сообщения об успешном восстановлении
-echo -e "\e[92mВосстановление завершено\e[0m"
+echo -e "\e[92mВыполнение скрипта завершено!\e[0m"
+
+log_message "********* FINISH *********" 
