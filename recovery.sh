@@ -11,6 +11,41 @@ log_message() {
 
 log_message "********* START RECOVERY *********"  
 
+# Проверка наличия установленных пакетов
+check_packages() {
+    echo "-------------------------------------------"
+    for package in "$@"; do
+        echo "Проверка установлен ли пакет - $package"
+        if ! command -v "$package" &> /dev/null; then
+            log_message "Предупреждение: Не установлен пакет $package"
+            echo -e "\e[91mПредупреждение: Не установлен пакет $package\e[0m"
+            echo -e "\e[91mДальнейшая работа скрипта не возможна без его наличия в системе!\e[0m"
+
+            read -p "Желаете установить $package (yes/no)? " install_app
+
+            if [ "$install_app" = "yes" ]; then
+                log_message "Установка пакета $package..."
+                echo -e "\e[92mУстановка пакета $package...\e[0m"
+                
+                sudo apt update
+                sudo apt install $package -y
+            
+            else
+                log_message "РАБОТА СКРИПТА ОСТАНОВЛЕНА!!!"
+                echo -e "\e[91mЗавершение работы скрипта!\e[0m"
+                exit 1
+            fi
+
+        else
+            log_message "$package - Ok"
+            echo -e "\e[93m$package - Ok\e[0m" 
+        fi
+    done
+    echo "-------------------------------------------"
+}
+
+check_packages "rsync" "zip"
+
 # Находим крайнюю созданную директорию с резервными копиями
 backup_dir=$(find /BACKUPS -type d -name "backup_*" | sort -r | head -n 1)
 
